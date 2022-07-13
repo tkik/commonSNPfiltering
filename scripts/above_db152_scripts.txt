@@ -1,0 +1,21 @@
+#enter directory
+
+wget https://ftp.ncbi.nih.gov/snp/redesign/latest_release/VCF/GCF_000001405.25.gz
+wget https://ftp.ncbi.nih.gov/snp/redesign/latest_release/VCF/GCF_000001405.25.gz.tbi
+wget https://raw.githubusercontent.com/Shicheng-Guo/AnnotationDatabase/master/GCF_000001405.25_GRCh37.p13_assembly_report.txt
+awk -v RS="(\r)?\n" 'BEGIN { FS="\t" } !/^#/ { if ($10 != "na") print $7,$10; else print $7,$5 }' GCF_000001405.25_GRCh37.p13_assembly_report.txt > dbSNP-to-UCSC-GRCh37.p13.map
+
+
+oarsub -l /cpu=20,walltime=02:00:00 'bcftools annotate --threads 20 --rename-chrs dbSNP-to-UCSC-GRCh37.p13.map GCF_000001405.25.gz -o dbSNP155.hg19.vcf.gz'
+
+
+
+mkdir hg19_dbSNP155_splitted
+for i in chr1 chr2 chr3 chr4 chr5 chr6 chr7 chr8 chr9 chr10 chr11 chr12 chr13 chr14 chr15 chr16 chr17 chr18 chr19 chr20 chr21 chr22 chrX chrY; 
+do 
+zcat dbSNP155.hg19.vcf.gz | grep -w ${i}  > hg19_dbSNP155_splitted/all_chr_${i}.vcf; 
+grep COMMON hg19_dbSNP155_splitted/all_chr_${i}.vcf > hg19_dbSNP155_splitted/common_all_chr_${i}.vcf
+done
+
+wget https://ftp.ncbi.nih.gov/snp/population_frequency/latest_release/freq.vcf.gz  
+wget https://ftp.ncbi.nih.gov/snp/population_frequency/latest_release/freq.vcf.gz.tbi
